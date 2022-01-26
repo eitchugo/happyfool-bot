@@ -1,0 +1,7 @@
+{
+    "access_token": "xxx",
+    "client_id": "xxx",
+    "channels": [
+        "my_channel"
+    ]
+}
