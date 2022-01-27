@@ -11,6 +11,7 @@
 from pathlib import Path
 import json
 
+
 class HappyFoolConfig:
     """
     Represents a configuration.
@@ -26,7 +27,16 @@ class HappyFoolConfig:
         "points_enabled": True,
         "points_name": "gatos",
         "points_timer_quantity": "10",
-        "points_timer_interval": "1",
+        "points_timer_interval": "10",
+        "points_ranks": {
+            "Humano Maldito": "0",
+            "Gatinho": "600",
+            "Gato": "1800",
+            "Gatão": "5400",
+            "Pantera": "16200",
+            "Odin Todo-Peludão": "50000",
+            "Guppy": "100000"
+        },
         "sfx_path": Path(__file__).parent.parent.parent / "data/sfx"
     }
 

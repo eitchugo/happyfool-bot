@@ -8,8 +8,8 @@
     :copyright: (c) 2022 by Hugo Cisneiros.
     :license: GPLv3, see LICENSE for more details.
 """
-import threading
 from pathlib import Path
+
 
 class SoundFX:
     """

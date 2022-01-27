@@ -21,5 +21,5 @@ class DatabaseConnection:
     """
     def __init__(self, database_file):
         database_url = f"sqlite+aiosqlite:///{database_file}"
-        self.engine = create_async_engine(database_url, future=True, echo=True)
+        self.engine = create_async_engine(database_url, future=True)
         self.session = sessionmaker(self.engine, expire_on_commit=False, class_=AsyncSession)

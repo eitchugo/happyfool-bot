@@ -16,6 +16,7 @@ from sqlalchemy.orm import Session
 
 from happyfool_bot.db.models import UserCommand, UserPoints
 
+
 class UserCommandDAL:
     """
     Data Access Layer for user commands
@@ -120,6 +121,7 @@ class UserCommandDAL:
         query = query.values(count=count)
         await self.db_session.execute(query)
 
+
 class UserPointsDAL:
     """
     Data Access Layer for user points / loyality
@@ -169,6 +171,22 @@ class UserPointsDAL:
         query.execution_options(synchronize_session="fetch")
         await self.db_session.execute(query)
 
+    async def get_points(self, user):
+        """
+        Gets points quantity for a user
+
+        Args:
+            user (str): User unique name
+
+        Returns:
+            int: quantity of points the user currently have
+        """
+        user_obj = await self.get_user(user)
+        if user_obj:
+            return user_obj[0].points
+        else:
+            return 0
+
     async def increment_points(self, user, quantity):
         """
         Increment points for a user
@@ -189,7 +207,7 @@ class UserPointsDAL:
 
     async def increment_minutes(self, user, quantity):
         """
-        Increment minutes for a user
+        Increments minutes for a user
 
         Args:
             user (str): unique name of a user
@@ -204,3 +222,74 @@ class UserPointsDAL:
         else:
             await self.add_user(user)
             await self.increment_minutes(user, quantity)
+
+    async def decrement_points(self, user, quantity):
+        """
+        Decrements points for a user
+
+        Args:
+            user (str): unique name of a user
+            quantity (int): how many points to decrement
+        """
+        user_obj = await self.get_user(user)
+        if user_obj:
+            query = update(UserPoints).where(UserPoints.user == user)
+            # floor is always 0
+            if (user_obj[0].points - quantity) <= 0:
+                minus_points = 0
+            else:
+                minus_points = UserPoints.points - quantity
+
+            query = query.values(points=minus_points)
+            await self.db_session.execute(query)
+        else:
+            await self.add_user(user)
+            await self.decrement_points(user, quantity)
+
+    async def get_hours(self, user):
+        """
+        Gets watched hours for a user
+
+        Args:
+            user (str): User unique name
+
+        Returns:
+            str: registered hours
+        """
+        user_obj = await self.get_user(user)
+        if user_obj:
+            minutes = user_obj[0].minutes
+            hours = int(minutes/60)
+            return f"{hours}h"
+        else:
+            return "0h"
+
+    @staticmethod
+    def get_rank(ranks, points):
+        """
+        Gets a user rank based on points. The received ranks format is::
+
+            {
+                "<rank-name>": "<minimum-points>",
+                "Rank1": "0",
+                "Rank2: "1000",
+                "Rank3: "5000",
+                ...
+            }
+
+        Args:
+            ranks (dict): A dict with the ranks and minimum points to reach them. See method description.
+            points (int): Number of points to check for a rank
+
+        Returns:
+            str: Rank name
+        """
+        result = None
+        for rank, minimum in ranks.items():
+            if points >= int(minimum):
+                result = f"{rank}"
+
+        if result is None:
+            result = "Sem rank"
+
+        return result

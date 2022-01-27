@@ -48,12 +48,17 @@ class Bot(commands.Bot):
         # points system
         if config.points_enabled:
             self.points_enabled = True
+            self.points_name = config.points_name
+            self.points_ranks = config.points_ranks
             self.points_timer_interval = int(config.points_timer_interval)
             self.points_timer_quantity = int(config.points_timer_quantity)
+
             # routine to add points in intervals (instead of decorator)
             self.add_points_system = routines.routine(
                 seconds=(self.points_timer_interval * 60),
                 wait_first=True)(self.add_points_system)
+
+            #
 
     async def db_startup(self):
         # create db tables
@@ -311,3 +316,59 @@ class Bot(commands.Bot):
                 else:
                     # command doesn't exist
                     await ctx.send(f"Comando {self.prefix}{command} não existe")
+
+    @commands.command()
+    async def gatos(self, ctx):
+        """
+        Wrapper command for points sub-commands
+
+        Args:
+            ctx (commands.Context): The Context object from the message that triggered the command
+        """
+        (_, *content) = ctx.message.content.split(maxsplit=1)
+        # check if using a sub-command or just showing points
+        try:
+            command = isolate_command(self.prefix, f"{self.prefix}{content[0]}")
+        except IndexError:
+            await self.points_show(ctx)
+            return
+
+        if command == "add":
+            await self.points_add(ctx, content)
+        elif command == "remove":
+            await self.points_remove(ctx, content)
+        elif command == "show":
+            await self.points_show(ctx, content)
+        elif command == "add_all":
+            await self.points_add_all(ctx, content)
+        elif command == "remove_all":
+            await self.points_remove_all(ctx, content)
+        else:
+            await self.points_show(ctx)
+
+    @commands.command()
+    async def points_show(self, ctx):
+        user = ctx.author.name
+        async with self.db_session() as session:
+            async with session.begin():
+                userpoints_dal = UserPointsDAL(session)
+                points = await userpoints_dal.get_points(user)
+                rank = UserPointsDAL.get_rank(self.points_ranks, points)
+                hours = await userpoints_dal.get_hours(user)
+                await ctx.send(f"{user}, você tem {points} {self.points_name} e é [{rank}]. Horas na live: {hours}")
+
+    @commands.command()
+    async def points_add(self, ctx):
+        pass
+
+    @commands.command()
+    async def points_remove(self, ctx):
+        pass
+
+    @commands.command()
+    async def points_add_all(self, ctx):
+        pass
+
+    @commands.command()
+    async def points_remove_all(self, ctx):
+        pass
