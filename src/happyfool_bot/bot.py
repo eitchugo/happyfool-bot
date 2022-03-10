@@ -9,13 +9,13 @@
     :license: GPLv3, see LICENSE for more details.
 """
 import re
-from twitchio import Channel
 from twitchio.ext import commands, routines
 from twitchio.ext.commands.errors import CommandNotFound
 from happyfool_bot.logger import logger
 from happyfool_bot.utils import isolate_command
 from happyfool_bot.db.dals import UserCommandDAL, UserPointsDAL
-from happyfool_bot.db.models import UserCommand, Base
+from happyfool_bot.db.models import Base
+from happyfool_bot.obs_websocket import OBSWebSocket
 
 
 class Bot(commands.Bot):
@@ -38,7 +38,6 @@ class Bot(commands.Bot):
         )
         self.prefix = prefix
         self.initial_channels = initial_channels
-        self.sfx_path = config.sfx_path
 
         # database init
         self.db_engine = db.engine
@@ -58,7 +57,15 @@ class Bot(commands.Bot):
                 seconds=(self.points_timer_interval * 60),
                 wait_first=True)(self.add_points_system)
 
-            #
+        # obs websocket system
+        self.obs_websocket = OBSWebSocket(
+            host=config.obs_websocket['host'],
+            port=config.obs_websocket['port'],
+            password=config.obs_websocket['password'],
+            loop=self.loop
+        )
+        self.sound_path = config.obs_websocket['sound_path']
+        self.sound_volume = config.obs_websocket['sound_volume']
 
     async def db_startup(self):
         # create db tables
@@ -81,9 +88,6 @@ class Bot(commands.Bot):
     async def list_channel_users(self):
         """
         List channel users
-
-        Args:
-            channel (str): A channel to search on, without the leading `#`
 
         Returns:
             list: usernames that are currently on channel
@@ -117,9 +121,18 @@ class Bot(commands.Bot):
                     await userpoints_dal.increment_minutes(user, self.points_timer_interval)
 
     async def event_ready(self):
-        logger.info(f"Successfully logged in as: {self.nick}")
         if self.points_enabled:
             self.add_points_system.start(self.points_timer_quantity)
+
+        # connect to obs websocket to enable system
+
+        if await self.obs_websocket.connect():
+            logger.info("Connected to OBS Websocket.")
+        else:
+            logger.error("Couldn't enable OBS Websocket system. Disabling feature.")
+
+        # we're logged in and ready!
+        logger.info(f"Successfully logged in as: {self.nick}. Bot is running!")
 
     async def event_message(self, message):
         if message.echo:
@@ -157,7 +170,6 @@ class Bot(commands.Bot):
         Args:
             ctx (commands.Context): The Context object from the message that triggered the command
         """
-        message = ctx.message
         content = ctx.message.content
         user = ctx.message.author.name
 
@@ -305,9 +317,6 @@ class Bot(commands.Bot):
                 usercommand_dal = UserCommandDAL(session)
                 usercommand = await usercommand_dal.get_command_by_name(command)
                 if usercommand is not None:
-                    # delete command
-
-                    await usercommand_dal.delete_command(usercommand[0].id)
                     await ctx.send(
                         f"Comando {self.prefix}{command} "
                         f"criado por {usercommand[0].creator}, "
@@ -372,3 +381,10 @@ class Bot(commands.Bot):
     @commands.command()
     async def points_remove_all(self, ctx):
         pass
+
+    @commands.command()
+    async def saver(self, ctx):
+        await self.obs_websocket.play_sound(
+            self.sound_path / "ia_saver.mp3",
+            self.sound_volume
+        )

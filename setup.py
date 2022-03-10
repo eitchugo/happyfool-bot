@@ -32,7 +32,8 @@ setup(
     install_requires=[
         "twitchio==2.1.4",
         "aiosqlite==0.17.0",
-        "SQLAlchemy==1.4.31"
+        "SQLAlchemy==1.4.31",
+        "simpleobsws==0.0.7"
     ],
     entry_points={
         'console_scripts': [

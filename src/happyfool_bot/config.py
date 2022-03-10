@@ -18,7 +18,7 @@ class HappyFoolConfig:
     """
     # configuration defaults
     CONFIG = {
-        "debug_mode": False,
+        "debug_mode": True,
         "config_filename": Path(__file__).parent.parent.parent / "config.json",
         "database_filename": Path(__file__).parent.parent.parent / "data/happyfool.db",
         "access_token": 'replace-me',
@@ -37,7 +37,15 @@ class HappyFoolConfig:
             "Odin Todo-Peludão": "50000",
             "Guppy": "100000"
         },
-        "sfx_path": Path(__file__).parent.parent.parent / "data/sfx"
+        "sfx_path": Path(__file__).parent.parent.parent / "data/sfx",
+        "sfx_player_options": {},
+        "obs_websocket": {
+            "host": "localhost",
+            "port": "4444",
+            "password": "MYSecurePassword",
+            "sound_path": Path(__file__).parent.parent.parent / "data/sfx",
+            "sound_volume": 0.3
+        }
     }
 
     def __init__(self, name=None, **kwargs):

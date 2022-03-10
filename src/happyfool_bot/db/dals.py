@@ -90,6 +90,7 @@ class UserCommandDAL:
         Updates a command's text.
 
         Args:
+            id (int): Command ID
             text (str): Command's reply text
         """
         query = update(UserCommand).where(UserCommand.id == id)
