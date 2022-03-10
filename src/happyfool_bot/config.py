@@ -18,7 +18,7 @@ class HappyFoolConfig:
     """
     # configuration defaults
     CONFIG = {
-        "debug_mode": True,
+        "debug_mode": False,
         "config_filename": Path(__file__).parent.parent.parent / "config.json",
         "database_filename": Path(__file__).parent.parent.parent / "data/happyfool.db",
         "access_token": 'replace-me',
