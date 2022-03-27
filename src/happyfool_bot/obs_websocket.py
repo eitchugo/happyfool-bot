@@ -9,8 +9,6 @@
     :copyright: (c) 2022 by Hugo Cisneiros.
     :license: GPLv3, see LICENSE for more details.
 """
-from pathlib import Path
-import json
 import asyncio
 import simpleobsws
 
@@ -43,7 +41,16 @@ class OBSWebSocket:
         await self.obs_websocket.connect()
         return True
 
-    async def play_sound(self, sound, volume):
+    async def play_sound(self, sound, volume, scene="current"):
+        """
+        Plays a sound by creating a ffmpeg_source on OBS via WebSocket.
+
+        Args:
+            sound (str): Full path of sound file.
+            volume (float): Volume to play the sound. Ranges from 0.0 to 1.0.
+            scene (str|Optional): The scene name to create the ffmpeg_source into. By default, uses the name `current`
+                which create the source into the dynamic current scene instead of a fixed one.
+        """
         # force sound path to be a str and volume to float
         sound = str(sound)
         volume = float(volume)
@@ -51,8 +58,25 @@ class OBSWebSocket:
         # check if there's already a sound playing
         # TODO: add 1 minute of tolerance
         while True:
-            # get the current scene
-            result = await self.obs_websocket.call('GetCurrentScene')
+            # by default gets the current scene
+            if scene == "current":
+                result = await self.obs_websocket.call('GetCurrentScene')
+            else:
+                scene_list = await self.obs_websocket.call('GetSceneList')
+                # check if we have the scene inside the list of scenes
+                index = 0
+                result = None
+                for iter_scene in scene_list['scenes']:
+                    if iter_scene['name'] == scene:
+                        result = iter_scene
+                        break
+                    else:
+                        index = index+1
+
+                # fallback to current scene if we don't find any scene specified
+                if not result:
+                    result = await self.obs_websocket.call("GetCurrentScene")
+
             scene = result['name']
             sources_list = result['sources']
 
@@ -96,7 +120,7 @@ class OBSWebSocket:
 
         # play it
         await self.obs_websocket.call('SetSceneItemProperties', {
-            "scene": scene,
+            "scene-name": scene,
             "item": {
                 "name": f"sound-{sound}",
             },

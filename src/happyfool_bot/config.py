@@ -21,6 +21,8 @@ class HappyFoolConfig:
         "debug_mode": False,
         "config_filename": Path(__file__).parent.parent.parent / "config.json",
         "database_filename": Path(__file__).parent.parent.parent / "data/happyfool.db",
+        "jokes_filename": Path(__file__).parent.parent.parent / "data/text/piadasruins.txt",
+        "jokes_cooldown": "10",
         "access_token": 'replace-me',
         "channels": [],
         "user_commands_prefix": '!',
@@ -37,15 +39,36 @@ class HappyFoolConfig:
             "Odin Todo-Peludão": "50000",
             "Guppy": "100000"
         },
-        "sfx_path": Path(__file__).parent.parent.parent / "data/sfx",
-        "sfx_player_options": {},
+        "sfx_enabled": True,
         "obs_websocket": {
+            "enabled": True,
             "host": "localhost",
             "port": "4444",
             "password": "MYSecurePassword",
+            "sound_scene_name": "SFX",
             "sound_path": Path(__file__).parent.parent.parent / "data/sfx",
             "sound_volume": 0.3
-        }
+        },
+        "bets_enabled": True,
+        "bets_minimum_bet": 60,
+        "bets_command": "apostar",
+        "bets_all_in_word": "tudo",
+        "bets_double_chance": 45,
+        "bets_triple_chance": 5,
+        "bets_lose_chance": 50,
+        "bets_user_cooldown": 300,
+        "slots_enabled": True,
+        "slots_bet": 60,
+        "slots_user_cooldown": 1,
+        "slots_emotes": [
+            "BibleThump",
+            "KEKW",
+            "Kreygasm",
+            "LUL",
+            "monkaS",
+            "DxCat"
+        ],
+        "slots_super_emote": "CoolStoryBob"
     }
 
     def __init__(self, name=None, **kwargs):

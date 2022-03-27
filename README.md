@@ -17,7 +17,9 @@ This installs using develop mode, so you can also edit files at will :)
 ## Usage
 
 Copy `sample-config.json` as `config.json` and configure its options. You will need at least a Twitch OAuth2 token and
-the initial channels that the bot will join. 
+the initial channels that the bot will join. You can also edit config.py directly.
+
+You can use the [Twitch Token Generator](https://twitchtokengenerator.com/) site to generate a token.
 
 To run the bot, there's only a CLI front-end for now:
 

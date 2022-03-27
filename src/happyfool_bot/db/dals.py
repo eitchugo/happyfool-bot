@@ -8,13 +8,13 @@
     :copyright: (c) 2022 by Hugo Cisneiros.
     :license: GPLv3, see LICENSE for more details.
 """
-import time
+from datetime import datetime
 import sqlalchemy.exc
 from sqlalchemy import update, delete
 from sqlalchemy.future import select
 from sqlalchemy.orm import Session
 
-from happyfool_bot.db.models import UserCommand, UserPoints
+from happyfool_bot.db.models import UserCommand, UserPoints, SFXCommand
 
 
 class UserCommandDAL:
@@ -36,7 +36,7 @@ class UserCommandDAL:
             creator (str): Who is creating the command
             text (str): Command reply text
         """
-        new_command = UserCommand(name=name, creator=creator, timestamp=time.time(), text=text)
+        new_command = UserCommand(name=name, creator=creator, timestamp=datetime.now(), text=text)
         self.db_session.add(new_command)
         await self.db_session.flush()
 
@@ -120,6 +120,7 @@ class UserCommandDAL:
         query = update(UserCommand).where(UserCommand.id == id)
         count = UserCommand.count + 1
         query = query.values(count=count)
+        query.execution_options(synchronize_session="fetch")
         await self.db_session.execute(query)
 
 
@@ -201,6 +202,7 @@ class UserPointsDAL:
             query = update(UserPoints).where(UserPoints.user == user)
             plus_points = UserPoints.points + quantity
             query = query.values(points=plus_points)
+            query.execution_options(synchronize_session="fetch")
             await self.db_session.execute(query)
         else:
             await self.add_user(user)
@@ -219,6 +221,7 @@ class UserPointsDAL:
             query = update(UserPoints).where(UserPoints.user == user)
             plus_minutes = UserPoints.minutes + quantity
             query = query.values(minutes=plus_minutes)
+            query.execution_options(synchronize_session="fetch")
             await self.db_session.execute(query)
         else:
             await self.add_user(user)
@@ -242,6 +245,7 @@ class UserPointsDAL:
                 minus_points = UserPoints.points - quantity
 
             query = query.values(points=minus_points)
+            query.execution_options(synchronize_session="fetch")
             await self.db_session.execute(query)
         else:
             await self.add_user(user)
@@ -294,3 +298,96 @@ class UserPointsDAL:
             result = "Sem rank"
 
         return result
+
+
+class SFXCommandDAL:
+    """
+    Data Access Layer for SFX commands
+
+    Args:
+        db_session (Session): Database session to work on
+    """
+    def __init__(self, db_session):
+        self.db_session = db_session
+
+    async def create_command(self, name, audio_file, cost=60, user_cooldown=60, global_cooldown=60):
+        """
+        Creates a new user command
+
+        Args:
+            name (str): Command name
+            audio_file (str): audio file to play
+            cost (int|Optional): How much points costs to play the audio file
+            user_cooldown (int|Optional): Cooldown in seconds in which a specific user can play the sfx again. Defaults
+                to 60 seconds.
+            global_cooldown (int|Optional): Cooldown in seconds in which all users can play the sfx again. Defaults
+                to 60 seconds.
+        """
+        new_command = SFXCommand(
+            name=name,
+            timestamp=datetime.now(),
+            audio_file=audio_file,
+            cost=cost,
+            user_cooldown=user_cooldown,
+            global_cooldown=global_cooldown
+        )
+        self.db_session.add(new_command)
+        await self.db_session.flush()
+
+    async def get_command_by_name(self, name):
+        """
+        Gets a command by its name
+
+        Args:
+            name (str): Command name
+
+        Returns:
+            SFXCommand: Object containing the command. None if not found.
+        """
+        query = select(SFXCommand).where(SFXCommand.name == name)
+        result = await self.db_session.execute(query)
+        try:
+            return result.first()
+        except sqlalchemy.exc.NoResultFound:
+            return None
+
+    async def get_command_by_id(self, id):
+        """
+        Gets a command by its ID
+
+        Args:
+            id (int): Command ID
+
+        Returns:
+            SFXCommand: Object containing the command. None if not found.
+        """
+        query = select(SFXCommand).where(SFXCommand.id == id)
+        result = await self.db_session.execute(query)
+        try:
+            return result.first()
+        except sqlalchemy.exc.NoResultFound:
+            return None
+
+    async def delete_command(self, id):
+        """
+        Deletes a command.
+
+        Args:
+            id (int): ID of the command to delete
+        """
+        query = delete(SFXCommand).where(SFXCommand.id == id)
+        query.execution_options(synchronize_session="fetch")
+        await self.db_session.execute(query)
+
+    async def increment_counter(self, id):
+        """
+        Increments a command's counter by one
+
+        Args:
+            id (int): Command ID
+        """
+        query = update(SFXCommand).where(SFXCommand.id == id)
+        count = SFXCommand.count + 1
+        query = query.values(count=count)
+        query.execution_options(synchronize_session="fetch")
+        await self.db_session.execute(query)
